@@ -1,0 +1,9 @@
+{
+	"name":"examplenodeapp",
+	"description":"example node js app with ansible",
+	"author":"black dragon",
+	"dependencies":{
+		"express":"4.x"
+	},
+	"engine": "node => 0.10.6"
+}

@@ -1,0 +1,45 @@
+- hosts: redhat
+  become: yes
+  vars:
+    node_apps_location: /usr/local/opt/node
+
+  tasks:
+    - name: install EPEL Repo
+      dnf: name=epel-release state=present
+      
+    - name: import Remi GPG key
+      rpm_key:
+        key: "https://rpms.remirepo.net/RPM-GPG-KEY-remi2018"
+        state: present
+
+    - name: install Remi repo
+      dnf:
+        name: "https://rpms.remirepo.net/enterprise/remi-release-8.rpm"
+        state: present
+
+    - name: Ensure firewalld is stopped
+      service: name=firewalld state=stopped
+    
+    - name: Install node.js and npm
+      dnf: name=npm state=present enablerepo=epel
+
+    - name: Install forever (to run our nodejs)
+      npm: name=forever global=yes state=present
+
+    - name: Ensure node.js app folder exists
+      file: "path={{ node_apps_location }} state=directory"
+
+    - name: Copy example nodejs app to server
+      copy: "src=app dest={{ node_apps_location }}"
+
+    - name: Install app dependencies defined in package.json
+      npm: "path={{ node_apps_location }}/app"
+
+    - name: Check list of running node.js apps/
+      command: /usr/local/bin/forever list
+      register: forever_list
+      changed_when: false
+
+    - name: Start example Nodejs app
+      command: "/usr/local/bin/forever start {{ node_apps_location }}/app/app.js"
+      when: "forever_list.stdout.find(node_apps_location + '/app/app.js') == -1"      
